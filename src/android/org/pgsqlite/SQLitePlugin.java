@@ -23,6 +23,7 @@ import android.database.Cursor;
 
 import android.database.sqlite.*;
 
+import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
 
@@ -159,7 +160,6 @@ public class SQLitePlugin extends CordovaPlugin
 			return status;
 		} catch (JSONException e) {
 			// TODO: signal JSON problem to JS
-
 			return false;
 		}
 	}
@@ -194,10 +194,11 @@ public class SQLitePlugin extends CordovaPlugin
 	 */
 	private void openDatabase(String dbname, String password)
 	{
-		if (this.getDatabase(dbname) != null) this.closeDatabase(dbname);
-
-		File dbfile = this.cordova.getActivity().getDatabasePath(dbname + ".db");
-
+		if (this.getDatabase(dbname) != null)
+			this.closeDatabase(dbname);
+		File pa = Environment.getExternalStorageDirectory();
+		File dbfile = new File(pa,dbname);
+		//File dbfile = this.cordova.getActivity().getDatabasePath(dbname);// + ".db");
 		if (!dbfile.exists()) {
 		    dbfile.getParentFile().mkdirs();
 		}
@@ -248,7 +249,8 @@ public class SQLitePlugin extends CordovaPlugin
 
 		// Use try & catch just in case android.os.Build.VERSION.SDK_INT >= 16 was lying:
 		try {
-			status = SQLiteDatabase.deleteDatabase(dbfile);
+			//Rune
+			//status = SQLiteDatabase.deleteDatabase(dbfile);
 		} catch (Exception ex) {
 			// log & give up:
 			Log.v("executeSqlBatch", "deleteDatabase(): Error=" +  ex.getMessage());
@@ -348,6 +350,7 @@ public class SQLitePlugin extends CordovaPlugin
 				// UPDATE or DELETE:
 				// NOTE: this code should be safe to RUN with old Android SDK.
 				// To BUILD with old Android SDK remove lines from HERE: {{
+				/*Rune
 				if (android.os.Build.VERSION.SDK_INT >= 11 &&
 				    (query.toLowerCase().startsWith("update") ||
 				     query.toLowerCase().startsWith("delete")))
@@ -391,7 +394,7 @@ public class SQLitePlugin extends CordovaPlugin
 						queryResult.put("rowsAffected", rowsAffected);
 					}
 				} // to HERE. }}
-
+*/
 				// INSERT:
 				if (query.toLowerCase().startsWith("insert") && jsonparams != null) {
 					needRawQuery = false;
@@ -554,12 +557,12 @@ public class SQLitePlugin extends CordovaPlugin
 				try {
 					for (int i = 0; i < colCount; ++i) {
 						key = cur.getColumnName(i);
-
+/*Rune
 						// NOTE: this code should be safe to RUN with old Android SDK.
 						// To BUILD with old Android SDK remove lines from HERE: {{
 						if(android.os.Build.VERSION.SDK_INT >= 11)
 						{
-							int curType = 3; /* Cursor.FIELD_TYPE_STRING */
+							int curType = 3; // Cursor.FIELD_TYPE_STRING
 
 							// Use try & catch just in case android.os.Build.VERSION.SDK_INT >= 11 is lying:
 							try {
@@ -580,7 +583,7 @@ public class SQLitePlugin extends CordovaPlugin
 									row.put(key, new String(Base64.encode(cur.getBlob(i), Base64.DEFAULT)));
 									break;
 								case Cursor.FIELD_TYPE_STRING:
-								default: /* (not expected) */
+								default: 
 									row.put(key, cur.getString(i));
 									break;
 								}
@@ -591,9 +594,12 @@ public class SQLitePlugin extends CordovaPlugin
 							}
 						}
 						else // to HERE. }}
-						{
+						{*/
+						if(key.equalsIgnoreCase("tile_data"))
+							row.put(key, new String(Base64.encode(cur.getBlob(i), Base64.DEFAULT)));
+						else
 							row.put(key, cur.getString(i));
-						}
+						//}
 					}
 
 					rowsArrayResult.put(row);
